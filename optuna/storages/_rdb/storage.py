@@ -737,10 +737,15 @@ class RDBStorage(BaseStorage, BaseHeartbeat):
         trial = models.TrialModel.find_or_raise_by_id(trial_id, session)
         self.check_trial_is_updatable(trial_id, trial.state)
 
-        attribute = models.TrialUserAttributeModel.find_by_trial_and_key(trial, key, session)
+        attribute = models.TrialAttributeModel.find_by_trial_and_key(
+            trial, models.TrialAttributeModel.TrialAttributeType.USER, key, session
+        )
         if attribute is None:
-            attribute = models.TrialUserAttributeModel(
-                trial_id=trial_id, key=key, value_json=json.dumps(value)
+            attribute = models.TrialAttributeModel(
+                trial_id=trial_id,
+                key=key,
+                value_json=json.dumps(value),
+                attr_type=models.TrialAttributeModel.TrialAttributeType.USER,
             )
             session.add(attribute)
         else:
@@ -756,10 +761,15 @@ class RDBStorage(BaseStorage, BaseHeartbeat):
         trial = models.TrialModel.find_or_raise_by_id(trial_id, session)
         self.check_trial_is_updatable(trial_id, trial.state)
 
-        attribute = models.TrialSystemAttributeModel.find_by_trial_and_key(trial, key, session)
+        attribute = models.TrialAttributeModel.find_by_trial_and_key(
+            trial, models.TrialAttributeModel.TrialAttributeType.SYSTEM, key, session
+        )
         if attribute is None:
-            attribute = models.TrialSystemAttributeModel(
-                trial_id=trial_id, key=key, value_json=json.dumps(value)
+            attribute = models.TrialAttributeModel(
+                trial_id=trial_id,
+                key=key,
+                value_json=json.dumps(value),
+                attr_type=models.TrialAttributeModel.TrialAttributeType.SYSTEM,
             )
             session.add(attribute)
         else:

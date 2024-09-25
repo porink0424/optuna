@@ -302,11 +302,11 @@ class TrialAttributeModel(BaseModel):
 
     @classmethod
     def find_by_trial_and_key(
-        cls, trial: TrialModel, key: str, session: orm.Session
+        cls, trial: TrialModel, attr_type: TrialAttributeType, key: str, session: orm.Session
     ) -> "TrialAttributeModel" | None:
         attribute = (
             session.query(cls)
-            .filter(cls.trial_id == trial.trial_id)
+            .filter(cls.trial_id == trial.trial_id, cls.attr_type == attr_type)
             .filter(cls.key == key)
             .one_or_none()
         )
@@ -314,11 +314,7 @@ class TrialAttributeModel(BaseModel):
         return attribute
 
     @classmethod
-    def where_trial_id(cls, trial_id: int, session: orm.Session) -> list["TrialAttributeModel"]:
-        return session.query(cls).filter(cls.trial_id == trial_id).all()
-
-    @classmethod
-    def where_trial_id_and_attr_type(
+    def where_trial_id(
         cls, trial_id: int, attr_type: TrialAttributeType, session: orm.Session
     ) -> list["TrialAttributeModel"]:
         return (
