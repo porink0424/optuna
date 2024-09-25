@@ -273,6 +273,59 @@ class TrialModel(BaseModel):
         return trial_count.scalar()
 
 
+class TrialAttributeModel(BaseModel):
+    class TrialAttributeType(enum.Enum):
+        USER = 1
+        SYSTEM = 2
+
+    __tablename__ = "trial_attributes"
+    __table_args__: Any = (UniqueConstraint("trial_id", "key", "attr_type"),)
+    trial_attribute_id = _Column(Integer, primary_key=True)
+    trial_id = _Column(Integer, ForeignKey("trials.trial_id"))
+    key = _Column(String(MAX_INDEXED_STRING_LENGTH))
+    value_json = _Column(Text())
+    attr_type = _Column(Enum(TrialAttributeType), nullable=False)
+
+    trial = orm.relationship(
+        TrialModel, backref=orm.backref("attributes", cascade="all, delete-orphan")
+    )
+
+    @property
+    def user_attributes(self) -> list["TrialAttributeModel"]:
+        return [attr for attr in self.attributes if attr.attr_type == self.TrialAttributeType.USER]
+
+    @property
+    def system_attributes(self) -> list["TrialAttributeModel"]:
+        return [
+            attr for attr in self.attributes if attr.attr_type == self.TrialAttributeType.SYSTEM
+        ]
+
+    @classmethod
+    def find_by_trial_and_key(
+        cls, trial: TrialModel, key: str, session: orm.Session
+    ) -> "TrialAttributeModel" | None:
+        attribute = (
+            session.query(cls)
+            .filter(cls.trial_id == trial.trial_id)
+            .filter(cls.key == key)
+            .one_or_none()
+        )
+
+        return attribute
+
+    @classmethod
+    def where_trial_id(cls, trial_id: int, session: orm.Session) -> list["TrialAttributeModel"]:
+        return session.query(cls).filter(cls.trial_id == trial_id).all()
+
+    @classmethod
+    def where_trial_id_and_attr_type(
+        cls, trial_id: int, attr_type: TrialAttributeType, session: orm.Session
+    ) -> list["TrialAttributeModel"]:
+        return (
+            session.query(cls).filter(cls.trial_id == trial_id, cls.attr_type == attr_type).all()
+        )
+
+
 class TrialUserAttributeModel(BaseModel):
     __tablename__ = "trial_user_attributes"
     __table_args__: Any = (UniqueConstraint("trial_id", "key"),)

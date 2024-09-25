@@ -371,7 +371,9 @@ class RDBStorage(BaseStorage, BaseHeartbeat):
             # Ensure trial exists.
             models.TrialModel.find_or_raise_by_id(trial_id, session)
 
-            attributes = models.TrialUserAttributeModel.where_trial_id(trial_id, session)
+            attributes = models.TrialAttributeModel.where_trial_id_and_attr_type(
+                trial_id, models.TrialAttributeModel.TrialAttributeType.USER, session
+            )
             user_attrs = {attr.key: json.loads(attr.value_json) for attr in attributes}
 
         return user_attrs
@@ -381,7 +383,9 @@ class RDBStorage(BaseStorage, BaseHeartbeat):
             # Ensure trial exists.
             models.TrialModel.find_or_raise_by_id(trial_id, session)
 
-            attributes = models.TrialSystemAttributeModel.where_trial_id(trial_id, session)
+            attributes = models.TrialAttributeModel.where_trial_id_and_attr_type(
+                trial_id, models.TrialAttributeModel.TrialAttributeType.SYSTEM, session
+            )
             system_attrs = {attr.key: json.loads(attr.value_json) for attr in attributes}
 
         return system_attrs
@@ -827,8 +831,7 @@ class RDBStorage(BaseStorage, BaseHeartbeat):
                     session.query(models.TrialModel)
                     .options(sqlalchemy_orm.selectinload(models.TrialModel.params))
                     .options(sqlalchemy_orm.selectinload(models.TrialModel.values))
-                    .options(sqlalchemy_orm.selectinload(models.TrialModel.user_attributes))
-                    .options(sqlalchemy_orm.selectinload(models.TrialModel.system_attributes))
+                    .options(sqlalchemy_orm.selectinload(models.TrialModel.attributes))
                     .options(sqlalchemy_orm.selectinload(models.TrialModel.intermediate_values))
                     .filter(
                         models.TrialModel.trial_id.in_(trial_ids),
@@ -852,8 +855,7 @@ class RDBStorage(BaseStorage, BaseHeartbeat):
                     session.query(models.TrialModel)
                     .options(sqlalchemy_orm.selectinload(models.TrialModel.params))
                     .options(sqlalchemy_orm.selectinload(models.TrialModel.values))
-                    .options(sqlalchemy_orm.selectinload(models.TrialModel.user_attributes))
-                    .options(sqlalchemy_orm.selectinload(models.TrialModel.system_attributes))
+                    .options(sqlalchemy_orm.selectinload(models.TrialModel.attributes))
                     .options(sqlalchemy_orm.selectinload(models.TrialModel.intermediate_values))
                     .filter(models.TrialModel.study_id == study_id)
                     .order_by(models.TrialModel.trial_id)
